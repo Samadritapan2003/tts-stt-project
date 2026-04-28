@@ -1,0 +1,23 @@
+fastapi
+uvicorn[standard]
+websockets
+pydantic
+aiofiles
+python-multipart
+gtts
+soundfile
+numpy
+# For Vosk STT:
+vosk
+# If vosk pip fails on your system, see https://alphacephei.com/vosk for install instructions
+
+uvicorn main:app --reload
+run this in terminal 1, keep this constant
+
+python test_stt.py
+for running stt in the second terminal
+
+python test_tts.py
+for running tts in the second terminal
+
+for running in browser just open index.html make the html live and present

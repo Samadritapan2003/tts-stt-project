@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TTS/STT Demo</title>
+</head>
+<body>
+<h1>TTS / STT Demo</h1>
+
+<!-- TTS section -->
+<h2>Text to Speech</h2>
+<input type="text" id="tts-text" placeholder="Type text here" size="50">
+<button id="tts-btn">Generate TTS</button>
+<audio id="tts-audio" controls></audio>
+
+<!-- STT section -->
+<h2>Speech to Text</h2>
+<input type="file" id="stt-file" accept=".wav">
+<button id="stt-btn">Convert STT</button>
+<p id="stt-result"></p>
+
+<script>
+const ttsBtn = document.getElementById('tts-btn');
+const ttsText = document.getElementById('tts-text');
+const ttsAudio = document.getElementById('tts-audio');
+
+const sttBtn = document.getElementById('stt-btn');
+const sttFile = document.getElementById('stt-file');
+const sttResult = document.getElementById('stt-result');
+
+// TTS button
+ttsBtn.onclick = async () => {
+    const formData = new FormData();
+    formData.append("text", ttsText.value);
+    const response = await fetch("http://127.0.0.1:8000/tts", {
+        method: "POST",
+        body: formData
+    });
+    const blob = await response.blob();
+    ttsAudio.src = URL.createObjectURL(blob);
+};
+
+// STT button
+sttBtn.onclick = async () => {
+    const file = sttFile.files[0];
+    if (!file) return alert("Please select a WAV file");
+    const reader = new FileReader();
+    reader.onload = async () => {
+        const base64Audio = reader.result.split(",")[1]; // get only base64 part
+        const ws = new WebSocket("ws://127.0.0.1:8000/ws/stt");
+        
+        ws.onopen = () => {
+            ws.send(JSON.stringify({type:"start", sample_rate:16000}));
+            ws.send(JSON.stringify({type:"audio", data: base64Audio}));
+            ws.send(JSON.stringify({type:"end"}));
+        };
+
+        ws.onmessage = (msg) => {
+            const data = JSON.parse(msg.data);
+            if (data.type === "final") sttResult.innerText = data.text;
+        };
+    };
+    reader.readAsDataURL(file);
+};
+</script>
+</body>
+</html>
